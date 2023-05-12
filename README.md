@@ -22,6 +22,8 @@ Import the package to your flutter app: ```import 'package:dizzbase_client/dizzb
 
 In the flutter apps main() function, call DizzbaseConnection.configureConnection(...) to configure your backend services URL and access token.
 
+Take a look at the "Example" page on pub.dev to see how to use the API.
+
 To understand how the dart/flutter dizzbase client works, please review the flutter demo client:
 
 https://github.com/dizzweb-GmbH/dizzbase_flutter_demo

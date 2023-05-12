@@ -32,17 +32,33 @@ For each widget the requires streamed updates, create/dispose a DizzbaseConnecti
 
 ## Retrieve for use with StreamBuilder:
 
+Create a DizzbaseConnection (here: myDizzbaseConnection) object in the initState() override of the widget. Use it as follows to retrieve data that is being updated real-time:
+
+    StreamBuilder<List<Map<String, dynamic>>>(
+    stream: myDizzbaseConnection.streamFromQuery(DizzbaseQuery(table: MainTable("employee", pkey: 3))),
+    builder: ((context, snapshot) {
+        if (snapshot.hasData)
+        {
+        return Text ("Employee \"${snapshot.data![0]['employee_name']}\" uses the email address \"${snapshot.data![0]['employee_email']}\".");
+        }
+        return Text ("Waiting for inforation on employee number 3...");
+    })),
+
+
+
     // Demo of how a list of orders is automatically updated when a new order is added.
-    DizzbaseQuery(
+    stream: myDizzbaseConnection.streamFromQuery(DizzbaseQuery(
         table: MainTable("order"), 
         joinedTables: [JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey:  'sales_rep_id' )],
         filters: [Filter('employee', 'employee_id', 2)])
+        //...
 
     // Search with a LIKE statement.
-    DDizzbaseQuery(table: MainTable("employee"), filters: [Filter('employee', 'employee_email', '%hotmail%', comparison: 'LIKE')])
+    stream: myDizzbaseConnection.streamFromQuery(DizzbaseQuery(table: MainTable("employee"), filters: [Filter('employee', 'employee_email', '%hotmail%', comparison: 'LIKE')])
+    // ...
 
     // Complex query      
-    DizzbaseQuery(
+    stream: myDizzbaseConnection.streamFromQuery(DizzbaseQuery(
         table:
         MainTable('order'),
         joinedTables:
@@ -65,20 +81,8 @@ For each widget the requires streamed updates, create/dispose a DizzbaseConnecti
         Filter ('order', 'order_revenue', 50, comparison: ">="),
         ]
     )
+    //...
 
-
-    // Here wir are directly using the data for the stream without the DemoTable logic, to demonstrate how you can build widgets:
-    // Note the the dizzbaseConnection is initialized in the widget's initState. There has to be a separate dizzbaseClient for every widget/stream.
-    // Also note that the dizzbaseConnection is disposed of in the dispose() function of the stateful widget.
-    StreamBuilder<List<Map<String, dynamic>>>(
-    stream: dizzbaseConnectionForManualWidget.streamFromQuery(DizzbaseQuery(table: MainTable("employee", pkey: 3))),
-    builder: ((context, snapshot) {
-        if (snapshot.hasData)
-        {
-        return Text ("Employee \"${snapshot.data![0]['employee_name']}\" uses the email address \"${snapshot.data![0]['employee_email']}\".");
-        }
-        return Text ("Waiting for inforation on employee number 3...");
-    })),
 
 ## UPDATE/DELETE/INSERT Transactions
 
