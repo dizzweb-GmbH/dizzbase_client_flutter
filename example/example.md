@@ -1,6 +1,6 @@
 # Examples
 
-## Full flutter app
+## Full flutter API demo app
 
 Download a full flutter demo app for dizzbase at: https://github.com/dizzweb-GmbH/dizzbase_flutter_demo
 
@@ -30,7 +30,7 @@ For each widget the requires streamed updates, create/dispose a DizzbaseConnecti
         super.dispose();
     }
 
-## Retrieve for use with StreamBuilder:
+## Retrieve data with real-time updates for use with StreamBuilder:
 
 Create a DizzbaseConnection (here: myDizzbaseConnection) object in the initState() override of the widget. Use it as follows to retrieve data that is being updated real-time:
 
