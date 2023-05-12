@@ -1,0 +1,25 @@
+name: dizzbase_client
+description: Flutter client for the dizzbase node.js realtime database backend.
+version: 0.0.5
+homepage: https://dizzweb.com
+
+environment:
+  sdk: '>=2.19.6 <3.0.0'
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  json_annotation: ^4.8.1
+  socket_io_client: ^2.0.2
+  uuid: ^3.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  build_runner: ^2.3.3
+  json_serializable: ^6.6.2
+
+flutter:
+  uses-material-design: true
