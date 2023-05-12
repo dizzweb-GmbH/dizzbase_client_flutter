@@ -97,4 +97,6 @@ Use the DizzbaseUpdate, DizzbaseInsert, DizzbaseDelete classes with the Dizzbase
         setState(() => rowsAffected = result["rowCount"]);
         });
 
-Use DizzbaseConnection.directSQLTransaction() to send any custom SQL statement and receive the result as a future.
+## Directly sending SQL to execute SELECTs, stored procedures or anything else
+
+Use DizzbaseConnection.directSQLTransaction(String) to send any custom SQL statement and receive the result as a Future<DizzbaseDirectSQLResult>. DizzbaseDirectSQLResult contains your data and error information (if any).

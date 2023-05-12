@@ -1,3 +1,7 @@
+## 0.0.6
+
+* Updated Examples
+
 ## 0.0.5
 
 * Added examples page example/example.md
