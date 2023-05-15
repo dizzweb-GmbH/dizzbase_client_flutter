@@ -1,6 +1,9 @@
 // ignore_for_file: avoid_print, prefer_interpolation_to_compose_strings
+import 'dart:async';
+
 import 'package:json_annotation/json_annotation.dart';
-import 'dizzbase_connection.dart';
+import 'dizzbase_protocol.dart';
+import 'dizzbase_transactions.dart';
 
 // For information about how the JSON serialization works, please see https://docs.flutter.dev/data-and-backend/json
 // To include the code generator, run:
@@ -85,8 +88,10 @@ class Filter
 
 /// SELECT query for a stream
 @JsonSerializable(explicitToJson: true)
-class DizzbaseQuery extends DizzbaseRequest
+class DizzbaseQuery extends DizzbaseRequest<DizzbaseResultRows>
 {
+  StreamController<DizzbaseResultRows>? _controller;
+
   /// Create SELECT query for a stream. 
   DizzbaseQuery({required this.table, this.joinedTables = const [], this.sortFields = const [], this.filters = const []});
   /// Short hand for creating a stream for a single row by primary key. 
@@ -96,11 +101,54 @@ class DizzbaseQuery extends DizzbaseRequest
   final List<MainTable> joinedTables;
   final List<SortField> sortFields;
   final List<Filter> filters;
+  void Function (String transactionuuid, DizzbaseQuery q, bool reconnect)? _executionCallback;
 
   factory DizzbaseQuery.fromJson(Map<String, dynamic> json) => _$DizzbaseQueryFromJson(json);
   @override
   Map<String, dynamic> toJson() => _$DizzbaseQueryToJson(this);
+
+  StreamController<DizzbaseResultRows> runQuery (void Function (String transactionuuid, DizzbaseQuery q, bool reconnect) executionCallback)
+  {
+    init();
+    _controller ??= StreamController<DizzbaseResultRows>();
+    _executionCallback = executionCallback;
+    _executionCallback! (transactionuuid, this, false);
+    return _controller!;
+  }
+
+  @override
+  void complete(DizzbaseFromServerPacket fromServer)
+  {
+    if ((fromServer.error != "") || (fromServer.data == null))
+    {
+      String err = fromServer.error;
+      if (err == "") {err = "Data set is null due to an unknown error.";}
+      _controller!.addError(err);
+    } else {
+      var res = DizzbaseResultRows(fromServer.data!, fromServer);
+      _controller!.add(res);
+    }
+  }
+
+  @override
+  void dispose()
+  {
+    if (_controller != null) _controller!.close();
+  }
+
+  @override
+  void reconnect() // called when we reconnect to the server after a lost connnection
+  {
+    if (_executionCallback != null)
+    {
+      _executionCallback!(transactionuuid, this, true);
+    } else {
+      print ("WARNING: DizzbaseQuery.reconnect() called without valid _executionCallback.");
+    }
+  }
 }
+
+
 
 /// Converts a rows result set from a node.js query result to an easier to consume format. Mostly for dizzbase_client internal use only.
 List<Map<String, dynamic>> convertList (List<dynamic> ld)

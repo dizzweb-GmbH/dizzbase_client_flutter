@@ -6,11 +6,14 @@ part of 'dizzbase_transactions.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-DizzbaseTransaction _$DizzbaseTransactionFromJson(Map<String, dynamic> json) =>
-    DizzbaseTransaction()..transactionuuid = json['transactionuuid'] as String;
+DizzbaseTransaction<DizzbaseResultType>
+    _$DizzbaseTransactionFromJson<DizzbaseResultType>(
+            Map<String, dynamic> json) =>
+        DizzbaseTransaction<DizzbaseResultType>()
+          ..transactionuuid = json['transactionuuid'] as String;
 
-Map<String, dynamic> _$DizzbaseTransactionToJson(
-        DizzbaseTransaction instance) =>
+Map<String, dynamic> _$DizzbaseTransactionToJson<DizzbaseResultType>(
+        DizzbaseTransaction<DizzbaseResultType> instance) =>
     <String, dynamic>{
       'transactionuuid': instance.transactionuuid,
     };

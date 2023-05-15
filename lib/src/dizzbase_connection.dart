@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'dizzbase_protocol.dart';
 import 'dizzbase_transactions.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:uuid/uuid.dart';
@@ -8,14 +9,7 @@ import 'dizzbase_query.dart';
 
 String gUrl = "http://localhost:3000";
 String gApiAccessToken = "";
-
-class DizzbaseRequest
-{
-  Map<String, dynamic> toJson() 
-  {
-    throw Exception("Abstract base class toJson called in DizzbaseRequest.");
-  }
-}
+String gUserToken = "";
 
 /// Create a DizzbaseConnection for every widget with realtime updating and/or for every SQL transaction
 /// Call DizzbaseConnection.dispose() in the StatefulWidget's dispose() event.
@@ -24,25 +18,29 @@ class DizzbaseConnection
   void Function (bool connected)? connectionStatusCallback;
   late String connectionuuid;
   late io.Socket _socket;
-  StreamController<List<Map<String,dynamic>>>? _controller;
-  Map<String, DizzbaseTransaction> transactions = {};
+  Map<String, DizzbaseRequest> transactions = {};
   bool hasBeenDisconnected = false;
-  DizzbaseQuery? lastQuery;
 
   /// Call once after app start to set connection parameters for all connections.
+  /// The apiAccessToken is the default authentication before any (optional) login has happened.
   static void configureConnection (String url, String apiAccessToken)
   {
     gUrl = url;
     gApiAccessToken = apiAccessToken;
   }
-  
+
   /// Add a connectionStatusCallback to get notified when the backend is not online or comes back online again.
   DizzbaseConnection ({this.connectionStatusCallback})
   {
     connectionuuid = const Uuid().v4();
-  
-    _socket = io.io(gUrl);
-    // TODO Implement security/access token
+
+    _socket = io.io(gUrl, io.OptionBuilder()
+      //.setTransports(['websocket']) // Authorization header does not work with this option??
+      .enableAutoConnect()
+      //.setExtraHeaders({'Authorization': "Bearer ${(gUserToken=="")?gApiAccessToken:gUserToken}"})
+      //.setQuery({'token': gApiAccessToken})
+      .build()
+    );
 
     _socket.emit ('init', connectionuuid);
 
@@ -52,9 +50,12 @@ class DizzbaseConnection
       print('Connected to server.');
       if (hasBeenDisconnected)
       {
+        print ("Reconnect: Sending reconnect notifications to queries.");
         _socket.emit ('init', connectionuuid);
         hasBeenDisconnected = false;
-        if (lastQuery != null) {_sendToServer(lastQuery!);}
+        transactions.forEach((key, t) { 
+          t.reconnect();
+        });
       }
       if (connectionStatusCallback != null)
       {
@@ -62,128 +63,107 @@ class DizzbaseConnection
       }
     });
 
+    /* unclear how to use this event...
+    _socket.on('connect_error', (data) {
+      print ("onnect_error: $data");
+      print (data.runtimeType.toString());
+    });
+    */
+
+    _socket.onerror((data) {
+      print ("Socket onerror: ${data.toString()}"); 
+      //throw Exception(data.toString());
+    });
+
+    _socket.on("error", (data) {
+      print ("Socket on 'error': ${data.toString()}"); 
+      //throw Exception(data.toString());
+    });
+
+
     // Send from server on query transactions (eg SELECT)
-    _socket.on('data', (data) {
+    _socket.on('dbrequest_response', (data) {      
       try
       {
-        if (data['status']['uuid'] == connectionuuid && data['status']['type'] == 'dizzbasequery')
+        if (data['uuid'] == connectionuuid) // check this before we .fromJson the full package for better performance.
         {
-          if ((data['status']['error'] != '') || (data['data'] == null))
-          {
-            print ("ERROR on query: ${data['status']}");
-          } else {
-            _sendToStream(convertList (data['data']));
-          }
+          var fromServer = DizzbaseFromServerPacket.fromJson (data);
+          transactions[fromServer.transactionuuid]!.complete(fromServer);
+          transactions[fromServer.transactionuuid]!.reset();
         }
-      } catch (e) {print ("_socket.on ('data') - error: $e");}
-    }); 
+        } catch (e) {print ("_socket.on ('dbrequest_response') - error: $e");}
+      }); 
 
-    // Send from server on non-query transactions (eg INSERT/DELETE/UPDATE)
-    _socket.on('status', (data) {
-      if (data["status"]['uuid'] == connectionuuid)
-      {
-        transactions[data["status"]['transactionuuid']]!.completer!.complete(data);
-        transactions[data["status"]['transactionuuid']]!.reset();
-      }
-    }); 
+    _socket.onDisconnect((_) => _handleDisconnect("Disconnect event."));
 
-    _socket.onDisconnect((_) {
-      hasBeenDisconnected = true;
-      print('disconnect');
-      if (connectionStatusCallback != null)
-      {
-        connectionStatusCallback! (false);
-      }
-    });
+    _socket.onError((data) => _handleDisconnect("Socket.io error: $data"));
+  }
+
+  void _handleDisconnect (String msg)
+  {
+    print(msg);
+    hasBeenDisconnected = true;
+    if (connectionStatusCallback != null)
+    {
+      connectionStatusCallback! (false);
+    }
   }
 
   /// Closes the stream (if any) and unregisteres the connection from the dizzbase server
   void dispose ()
   {
     _socket.emit('close', connectionuuid);
-    if (_controller != null)
-    {
-      if (! _controller!.isClosed)
-      {
-        _controller!.close();
-      }
-    }
+    transactions.forEach((key, t) {
+      t.dispose();
+    });
+    transactions = {};
   }
 
-  void _sendToStream(dynamic data)
+  void _sendToServer (DizzbaseRequest r, {String transactionuuid = ''})
   {
-    if (_controller != null)
-    {
-      _controller!.add(data);
-    }
+    var toServer = DizzbaseToServerPacket('', connectionuuid, transactionuuid, r, r.runtimeType.toString().toLowerCase());
+    _socket.emit('dbrequest', toServer);
   }
 
-  void _sendToServer (DizzbaseRequest r)
+  void _requestExecutionCallback (String tUuid, DizzbaseRequest t, bool reconnect)
   {
-    var augmentedRequest = r.toJson();
-    augmentedRequest['uuid'] = connectionuuid;
-    augmentedRequest['type'] = r.runtimeType.toString().toLowerCase();
-
-    _socket.emit('dbrequest', augmentedRequest);
+    if (!reconnect) transactions[tUuid] = t;
+    _sendToServer(t, transactionuuid: tUuid);
   }
+
 
   /// Creates a stream to be used with eg. a StreamBuilder widget
-  Stream<List<Map<String,dynamic>>> streamFromQuery (DizzbaseQuery q)
+  Stream<DizzbaseResultRows> streamFromQuery (DizzbaseQuery q)
   {
-    lastQuery = q;
-    _controller ??= StreamController<List<Map<String,dynamic>>>();
-    _sendToServer(q);
-    return _controller!.stream;
+    return q.runQuery(_requestExecutionCallback).stream;
   }
 
   /// Inserts data into the database and returns the primary key of the inserted row.
-  Future<int> insertTransaction (DizzbaseInsert req) async
+  Future<DizzbaseResultPkey> insertTransaction (DizzbaseInsert req) async
   {
-    var result = await _transaction (req);
-    if (result["status"]["error"] != "") {throw Exception(result["status"]["error"]);}
-    return result['data'][0]["pkey"];
+    var result = await req.runTransaction(_requestExecutionCallback);
+    return result;
   }
 
   /// Inserts data into the database and returns the primary key of the inserted row.
-  Future<Map<String, dynamic>> updateTransaction (DizzbaseUpdate req) async
+  Future<DizzbaseResultRowCount> updateTransaction (DizzbaseUpdate req) async
   {
-    var result = await _transaction (req);
-    return result["status"];
+    var result = await req.runTransaction(_requestExecutionCallback);
+    return result;
   }
 
   /// Inserts data into the database and returns the primary key of the inserted row.
-  Future<Map<String, dynamic>> deleteTransaction (DizzbaseDelete req) async
+  Future<DizzbaseResultRowCount> deleteTransaction (DizzbaseDelete req) async
   {
-    var result = await _transaction (req);
-    return result["status"];
+    var result = await req.runTransaction(_requestExecutionCallback);
+    return result;
   }
 
   /// Inserts data into the database and returns the primary key of the inserted row.
-  Future<DizzbaseDirectSQLResult> directSQLTransaction (String sql) async
+  Future<DizzbaseResultRows> directSQLTransaction (String sql) async
   {
-    var result = await _transaction (DizzbaseDirectSQL(sql));
-    var res = DizzbaseDirectSQLResult();
-    res.status = result["status"];
-    res.error = result["status"]["error"];
-    if (result["status"]["error"] == "")
-    {
-      res.data = convertList (result["data"]);
-    }
-    return res;
-  }
-
-  /// The Future that is return by this function contains a map with the primary key of the new row.
-  /// The primary key can be retrieved using the "pkey" key or by using it's proper column name, eg xxx_id
-  Future<Map<String, dynamic>> _transaction (DizzbaseTransaction req)
-  {
-    if (req.isRunning())
-    {
-      throw Exception ("DizzbaseTransactions cannote be re-used before the previous transaction has been completed.");
-    }
-
-    req.init();
-    transactions[req.transactionuuid] = req;
-    _sendToServer(req);
-    return req.completer!.future;
+    var req = DizzbaseDirectSQL(sql);
+    var result = await req.runTransaction(_requestExecutionCallback);
+    return result;
   }
 }
