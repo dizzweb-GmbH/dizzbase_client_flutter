@@ -9,18 +9,18 @@ The demo app illustrates all examples from below. It also contains SQL scripts t
 ## Initialization
 
 Initialize the dizzbase client in main():
-    ```dart
+    ```
     void main() {
         runApp(const MyApp());
         DizzbaseConnection.configureConnection("http://localhost:3000", "my-security-token");
     }
-    ```dart
+    ```
 
 ## Retrieve data with real-time updates for use with StreamBuilder:
 
 For each widget the requires streamed updates, create/dispose a DizzbaseConnection and create the Stream as follows:
 
-    ```dart
+    ```
     @override
     void initState() {
         myDizzbaseConnection = DizzbaseConnection();
