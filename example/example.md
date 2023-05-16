@@ -91,17 +91,25 @@ Use the _stream_x objects as follows:
 
 ## UPDATE/DELETE/INSERT Transactions
 
-Use the DizzbaseUpdate, DizzbaseInsert, DizzbaseDelete classes with the DizzbaseConnection().updateTransaction, DizzbaseConnection().insertTransaction, DizzbaseConnection().deleteTransaction methods like so:
+Use the DizzbaseUpdate, DizzbaseInsert, DizzbaseDelete classes with the DizzbaseConnection().updateTransaction, DizzbaseConnection().insertTransaction, DizzbaseConnection().deleteTransaction methods. Either a DizzbaseResultRowCount (UPDATE/DELTE: indicating the number of affected rows) or a DizzbaseResultPkey (INSERT: indicating the primary key of the new row) object is return as a future:
 
+    // Update, similar for Delete
     DizzbaseConnection().updateTransaction(
         DizzbaseUpdate(table: "employee", fields: ["employee_name", "employee_email"], 
         values: [_controllerName.text, _controllerEmail.text], filters: [Filter('employee', 'employee_id', 2)]))
         // ERROR HANDLING and show how many rows were updated:
         .then((result) {
-        if (result["error"]!= "") { throw Exception(result["error"]); }
-        setState(() => rowsAffected = result["rowCount"]);
+            if (result.error != "") { throw Exception(result.error); }
+            setState(() => rowsAffected = result.rowCount);
         });
+
+    // Insert
+    DizzbaseConnection().insertTransaction(
+        DizzbaseInsert(table: "order", fields: ["order_name", "customer_id", "sales_rep_id", "services_rep_id", "order_revenue"], 
+        values: [_controllerName.text, 1, 2, 2, _controllerRevenue.text], nickName: "InsertOrder"))
+        // RETRIEVING THE PRIMARY KEY... add error handling via result.error here as well if needed: 
+    .then((data) => setState(() => insertedRowPrimaryKey = data.pkey));
 
 ## Directly sending SQL to execute SELECTs, stored procedures or anything else
 
-Use DizzbaseConnection.directSQLTransaction(String) to send any custom SQL statement and receive the result as a Future<DizzbaseDirectSQLResult>. DizzbaseDirectSQLResult contains your data and error information (if any).
+Use ```DizzbaseConnection.directSQLTransaction(String sqlStatement)``` to send any custom SQL statement and receive the result as a Future<DizzbaseResultRows>. DizzbaseResultRows contains your data and error information (if any).
