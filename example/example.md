@@ -76,17 +76,17 @@ For each widget the requires streamed updates, create/dispose a DizzbaseConnecti
 
 Use the _stream_x objects as follows:
 
-    StreamBuilder<List<Map<String, dynamic>>>(
-    stream: _stream_x,
-    builder: ((context, snapshot) {
-        if (snapshot.hasData)
-        {
-            return // ... build your widget ...;
-        } else if (snapshot.hasError) {
-            throw Exception("Snapshot has error: ${snapshot.error}");
-        } else {
-            // ... show progress indicator ...
-        }
+    StreamBuilder<DizzbaseResultRows>(
+        stream: _stream_x,
+        builder: ((context, snapshot) {
+            if (snapshot.hasData)
+            {
+                return // ... build your widget ...;
+            } else if (snapshot.hasError) {
+                throw Exception("Snapshot has error: ${snapshot.error}");
+            } else {
+                // ... show progress indicator ...
+            }
     })),
 
 ## UPDATE/DELETE/INSERT Transactions
