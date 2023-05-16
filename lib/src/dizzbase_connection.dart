@@ -9,7 +9,6 @@ import 'dizzbase_query.dart';
 
 String gUrl = "http://localhost:3000";
 String gApiAccessToken = "";
-String gUserToken = "";
 
 /// Create a DizzbaseConnection for every widget with realtime updating and/or for every SQL transaction
 /// Call DizzbaseConnection.dispose() in the StatefulWidget's dispose() event.
@@ -127,6 +126,11 @@ class DizzbaseConnection
   {
     var toServer = DizzbaseToServerPacket('', connectionuuid, transactionuuid, r, r.runtimeType.toString().toLowerCase(), nickName: nickName);
     _socket.emit('dbrequest', toServer);
+  }
+
+  void sendMessageToServer (String event, Map<String, dynamic> message)
+  {
+    _socket.emit(event, message);
   }
 
   void _requestExecutionCallback (String tUuid, DizzbaseRequest t, bool reconnect)

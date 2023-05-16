@@ -176,9 +176,9 @@ class DizzbaseResultPkey extends DizzbaseResult
 /// For directSQL and stream-based result record sets
 class DizzbaseResultRows extends DizzbaseResult
 {
-  DizzbaseResultRows (this.data, DizzbaseFromServerPacket fromServer) : super (fromServer);
+  DizzbaseResultRows (this.rows, DizzbaseFromServerPacket fromServer) : super (fromServer);
   /// This is the structure that holds the retrieved data
-  List<Map<String, dynamic>>? data;
+  List<Map<String, dynamic>>? rows;
 }
 
 /// Abstract base class

@@ -85,6 +85,8 @@ Use the _stream_x objects as follows:
         builder: ((context, snapshot) {
             if (snapshot.hasData)
             {
+                // Use snapshot.data!.rows![rowNumber][fieldName] ... to access your data.
+                // eg: snapshot.data!.rows![0]["user_name"] ... 
                 return // ... build your widget ...;
             } else if (snapshot.hasError) {
                 throw Exception("Snapshot has error: ${snapshot.error}");

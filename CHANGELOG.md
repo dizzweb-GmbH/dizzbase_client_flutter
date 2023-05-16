@@ -1,5 +1,9 @@
 ## 0.0.8
 
+* First working version of login/authentication
+
+## 0.0.8
+
 * fixes
 
 ## 0.0.7
