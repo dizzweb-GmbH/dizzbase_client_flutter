@@ -93,11 +93,13 @@ DizzbaseQuery _$DizzbaseQueryFromJson(Map<String, dynamic> json) =>
               ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      nickName: json['nickName'] as String? ?? "",
     )..transactionuuid = json['transactionuuid'] as String;
 
 Map<String, dynamic> _$DizzbaseQueryToJson(DizzbaseQuery instance) =>
     <String, dynamic>{
       'transactionuuid': instance.transactionuuid,
+      'nickName': instance.nickName,
       'table': instance.table.toJson(),
       'joinedTables': instance.joinedTables.map((e) => e.toJson()).toList(),
       'sortFields': instance.sortFields.map((e) => e.toJson()).toList(),

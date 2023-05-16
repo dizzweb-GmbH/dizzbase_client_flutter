@@ -7,13 +7,13 @@ import 'dizzbase_protocol.dart';
 part 'dizzbase_transactions.g.dart';
 
 // For building the JSON code (generating dizzbase_transactions.g.dart), run: 
-//    flutter pub run build_runner build --delete-conflicting-outputs
+//    dart run build_runner build --delete-conflicting-outputs
 
 /// Abstract base class for non-streamed transactions
 @JsonSerializable(explicitToJson: true)
 class DizzbaseTransaction<DizzbaseResultType> extends DizzbaseRequest<DizzbaseResultType>
 { 
-  DizzbaseTransaction();
+  DizzbaseTransaction({required String nickName}) : super (nickName: nickName);
 
   @JsonKey(includeToJson: false, includeFromJson: false,)
   Completer<DizzbaseResultType>? _completer;
@@ -75,7 +75,7 @@ class DizzbaseTransaction<DizzbaseResultType> extends DizzbaseRequest<DizzbaseRe
 class DizzbaseUpdate extends DizzbaseTransaction<DizzbaseResultRowCount>
 {
 /// Creates a SQL UPDATE statement
-  DizzbaseUpdate ({required this.table, required this.fields, required this.values, this.filters = const []});
+  DizzbaseUpdate ({required this.table, required this.fields, required this.values, this.filters = const [], String nickName=""}) :super (nickName: nickName);
 
   final String table;
   final List<String> fields;
@@ -99,7 +99,7 @@ class DizzbaseUpdate extends DizzbaseTransaction<DizzbaseResultRowCount>
 class DizzbaseInsert extends DizzbaseTransaction<DizzbaseResultPkey>
 {
 /// Creates a SQL INSERT statement that returns the primary key of the new row
-  DizzbaseInsert ({required this.table, required this.fields, required this.values});
+  DizzbaseInsert ({required this.table, required this.fields, required this.values, String nickName=""}) :super (nickName: nickName);
   final String table;
   final List<String> fields;
   final dynamic values;
@@ -121,7 +121,7 @@ class DizzbaseInsert extends DizzbaseTransaction<DizzbaseResultPkey>
 class DizzbaseDelete extends DizzbaseTransaction<DizzbaseResultRowCount>
 {
   /// Creates a SQL DELETE statement
-  DizzbaseDelete ({required this.table, required this.filters});
+  DizzbaseDelete ({required this.table, required this.filters, String nickName=""}) :super (nickName: nickName);
   final String table;
   final List<Filter> filters;
 
@@ -142,7 +142,7 @@ class DizzbaseDelete extends DizzbaseTransaction<DizzbaseResultRowCount>
 class DizzbaseDirectSQL extends DizzbaseTransaction<DizzbaseResultRows>
 {
   /// Allows sending an arbitrary SQL statement to the server and retrieves any resulting row in a non-streamed way
-  DizzbaseDirectSQL (this.sql);
+  DizzbaseDirectSQL (this.sql, {String nickName=""}) :super (nickName: nickName);
   final String sql;
 
   factory DizzbaseDirectSQL.fromJson(Map<String, dynamic> json) => _$DizzbaseDirectSQLFromJson(json);

@@ -6,6 +6,19 @@ part of 'dizzbase_protocol.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+DizzbaseRequest<DizzbaseResultType>
+    _$DizzbaseRequestFromJson<DizzbaseResultType>(Map<String, dynamic> json) =>
+        DizzbaseRequest<DizzbaseResultType>(
+          nickName: json['nickName'] as String? ?? "",
+        )..transactionuuid = json['transactionuuid'] as String;
+
+Map<String, dynamic> _$DizzbaseRequestToJson<DizzbaseResultType>(
+        DizzbaseRequest<DizzbaseResultType> instance) =>
+    <String, dynamic>{
+      'transactionuuid': instance.transactionuuid,
+      'nickName': instance.nickName,
+    };
+
 DizzbaseToServerPacket _$DizzbaseToServerPacketFromJson(
         Map<String, dynamic> json) =>
     DizzbaseToServerPacket(
@@ -15,6 +28,7 @@ DizzbaseToServerPacket _$DizzbaseToServerPacketFromJson(
       DizzbaseRequest<dynamic>.fromJson(
           json['dizzbaseRequest'] as Map<String, dynamic>),
       json['dizzbaseRequestType'] as String,
+      nickName: json['nickName'] as String? ?? "",
     );
 
 Map<String, dynamic> _$DizzbaseToServerPacketToJson(
@@ -25,6 +39,7 @@ Map<String, dynamic> _$DizzbaseToServerPacketToJson(
       'transactionuuid': instance.transactionuuid,
       'dizzbaseRequest': instance.dizzbaseRequest.toJson(),
       'dizzbaseRequestType': instance.dizzbaseRequestType,
+      'nickName': instance.nickName,
     };
 
 DizzbaseFromServerPacket _$DizzbaseFromServerPacketFromJson(

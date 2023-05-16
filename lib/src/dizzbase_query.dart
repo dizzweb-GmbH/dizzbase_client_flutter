@@ -11,7 +11,7 @@ import 'dizzbase_transactions.dart';
 //    flutter pub add dev:build_runner
 //    flutter pub add dev:json_serializable
 // For building the JSON code (generating dizzbase_client.g.dart), run: 
-//    flutter pub run build_runner build --delete-conflicting-outputs
+//    dart run build_runner build --delete-conflicting-outputs
 part 'dizzbase_query.g.dart';
 
 @JsonSerializable(explicitToJson: true)
@@ -93,9 +93,9 @@ class DizzbaseQuery extends DizzbaseRequest<DizzbaseResultRows>
   StreamController<DizzbaseResultRows>? _controller;
 
   /// Create SELECT query for a stream. 
-  DizzbaseQuery({required this.table, this.joinedTables = const [], this.sortFields = const [], this.filters = const []});
+  DizzbaseQuery({required this.table, this.joinedTables = const [], this.sortFields = const [], this.filters = const [], String nickName=""}) : super (nickName: nickName);
   /// Short hand for creating a stream for a single row by primary key. 
-  DizzbaseQuery.singleRow (String table, int primaryKeyValue) : this(table: MainTable (table, pkey: primaryKeyValue));
+  DizzbaseQuery.singleRow (String table, int primaryKeyValue, {String nickName = ""}) : this(table: MainTable (table, pkey: primaryKeyValue), nickName: nickName);
 
   final MainTable table;
   final List<MainTable> joinedTables;

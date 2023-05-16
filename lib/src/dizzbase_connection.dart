@@ -20,6 +20,7 @@ class DizzbaseConnection
   late io.Socket _socket;
   Map<String, DizzbaseRequest> transactions = {};
   bool hasBeenDisconnected = false;
+  final String nickName;
 
   /// Call once after app start to set connection parameters for all connections.
   /// The apiAccessToken is the default authentication before any (optional) login has happened.
@@ -30,32 +31,30 @@ class DizzbaseConnection
   }
 
   /// Add a connectionStatusCallback to get notified when the backend is not online or comes back online again.
-  DizzbaseConnection ({this.connectionStatusCallback})
+  /// The nickName can be used for debugging in multi-connection scenarios and has no further function.
+  DizzbaseConnection ({this.connectionStatusCallback, this.nickName=""})
   {
     connectionuuid = const Uuid().v4();
 
     _socket = io.io(gUrl, io.OptionBuilder()
-      //.setTransports(['websocket']) // Authorization header does not work with this option??
+      .setTransports(['websocket']) // Authorization header does not work with this option??
       .enableAutoConnect()
       //.setExtraHeaders({'Authorization': "Bearer ${(gUserToken=="")?gApiAccessToken:gUserToken}"})
       //.setQuery({'token': gApiAccessToken})
       .build()
     );
 
-    _socket.emit ('init', connectionuuid);
-
     _socket.onConnect((val) {
       // Moved the init event directly after the io.io(url) call as the .onConnect event wasn't triggered reliably 
       //_socket.emit ('init', connectionuuid);
-      print('Connected to server.');
+      print('Connection $nickName: Connected to server.');
       if (hasBeenDisconnected)
       {
         print ("Reconnect: Sending reconnect notifications to queries.");
-        _socket.emit ('init', connectionuuid);
-        hasBeenDisconnected = false;
         transactions.forEach((key, t) { 
           t.reconnect();
         });
+        hasBeenDisconnected = false;
       }
       if (connectionStatusCallback != null)
       {
@@ -89,7 +88,6 @@ class DizzbaseConnection
         {
           var fromServer = DizzbaseFromServerPacket.fromJson (data);
           transactions[fromServer.transactionuuid]!.complete(fromServer);
-          transactions[fromServer.transactionuuid]!.reset();
         }
         } catch (e) {print ("_socket.on ('dbrequest_response') - error: $e");}
       }); 
@@ -121,13 +119,14 @@ class DizzbaseConnection
 
   void _sendToServer (DizzbaseRequest r, {String transactionuuid = ''})
   {
-    var toServer = DizzbaseToServerPacket('', connectionuuid, transactionuuid, r, r.runtimeType.toString().toLowerCase());
+    var toServer = DizzbaseToServerPacket('', connectionuuid, transactionuuid, r, r.runtimeType.toString().toLowerCase(), nickName: nickName);
     _socket.emit('dbrequest', toServer);
   }
 
   void _requestExecutionCallback (String tUuid, DizzbaseRequest t, bool reconnect)
   {
-    if (!reconnect) transactions[tUuid] = t;
+    if (!reconnect) transactions[tUuid] = t;	
+    print ("SENDING TO SERVER: $nickName / ${t.nickName}");
     _sendToServer(t, transactionuuid: tUuid);
   }
 

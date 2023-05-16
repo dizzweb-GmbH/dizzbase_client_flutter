@@ -9,13 +9,15 @@ part of 'dizzbase_transactions.dart';
 DizzbaseTransaction<DizzbaseResultType>
     _$DizzbaseTransactionFromJson<DizzbaseResultType>(
             Map<String, dynamic> json) =>
-        DizzbaseTransaction<DizzbaseResultType>()
-          ..transactionuuid = json['transactionuuid'] as String;
+        DizzbaseTransaction<DizzbaseResultType>(
+          nickName: json['nickName'] as String,
+        )..transactionuuid = json['transactionuuid'] as String;
 
 Map<String, dynamic> _$DizzbaseTransactionToJson<DizzbaseResultType>(
         DizzbaseTransaction<DizzbaseResultType> instance) =>
     <String, dynamic>{
       'transactionuuid': instance.transactionuuid,
+      'nickName': instance.nickName,
     };
 
 DizzbaseUpdate _$DizzbaseUpdateFromJson(Map<String, dynamic> json) =>
@@ -28,11 +30,13 @@ DizzbaseUpdate _$DizzbaseUpdateFromJson(Map<String, dynamic> json) =>
               ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      nickName: json['nickName'] as String? ?? "",
     )..transactionuuid = json['transactionuuid'] as String;
 
 Map<String, dynamic> _$DizzbaseUpdateToJson(DizzbaseUpdate instance) =>
     <String, dynamic>{
       'transactionuuid': instance.transactionuuid,
+      'nickName': instance.nickName,
       'table': instance.table,
       'fields': instance.fields,
       'values': instance.values,
@@ -45,11 +49,13 @@ DizzbaseInsert _$DizzbaseInsertFromJson(Map<String, dynamic> json) =>
       fields:
           (json['fields'] as List<dynamic>).map((e) => e as String).toList(),
       values: json['values'],
+      nickName: json['nickName'] as String? ?? "",
     )..transactionuuid = json['transactionuuid'] as String;
 
 Map<String, dynamic> _$DizzbaseInsertToJson(DizzbaseInsert instance) =>
     <String, dynamic>{
       'transactionuuid': instance.transactionuuid,
+      'nickName': instance.nickName,
       'table': instance.table,
       'fields': instance.fields,
       'values': instance.values,
@@ -61,11 +67,13 @@ DizzbaseDelete _$DizzbaseDeleteFromJson(Map<String, dynamic> json) =>
       filters: (json['filters'] as List<dynamic>)
           .map((e) => Filter.fromJson(e as Map<String, dynamic>))
           .toList(),
+      nickName: json['nickName'] as String? ?? "",
     )..transactionuuid = json['transactionuuid'] as String;
 
 Map<String, dynamic> _$DizzbaseDeleteToJson(DizzbaseDelete instance) =>
     <String, dynamic>{
       'transactionuuid': instance.transactionuuid,
+      'nickName': instance.nickName,
       'table': instance.table,
       'filters': instance.filters.map((e) => e.toJson()).toList(),
     };
@@ -73,10 +81,12 @@ Map<String, dynamic> _$DizzbaseDeleteToJson(DizzbaseDelete instance) =>
 DizzbaseDirectSQL _$DizzbaseDirectSQLFromJson(Map<String, dynamic> json) =>
     DizzbaseDirectSQL(
       json['sql'] as String,
+      nickName: json['nickName'] as String? ?? "",
     )..transactionuuid = json['transactionuuid'] as String;
 
 Map<String, dynamic> _$DizzbaseDirectSQLToJson(DizzbaseDirectSQL instance) =>
     <String, dynamic>{
       'transactionuuid': instance.transactionuuid,
+      'nickName': instance.nickName,
       'sql': instance.sql,
     };

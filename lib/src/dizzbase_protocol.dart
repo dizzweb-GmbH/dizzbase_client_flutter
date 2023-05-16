@@ -3,13 +3,15 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:uuid/uuid.dart';
 part 'dizzbase_protocol.g.dart';
 // For building the JSON code (generating dizzbase_client.g.dart), run: 
-//    flutter pub run build_runner build --delete-conflicting-outputs
+//    dart run build_runner build --delete-conflicting-outputs
 
 /// Base class to handle queries and transactions, implements uuid identification
+@JsonSerializable(explicitToJson: true)
 class DizzbaseRequest<DizzbaseResultType>
 {
-  DizzbaseRequest();
+  DizzbaseRequest({this.nickName=""});
   String transactionuuid = "";
+  final String nickName;
 
   void init()
   {
@@ -32,15 +34,8 @@ class DizzbaseRequest<DizzbaseResultType>
     throw Exception("Abstract base class complete called in DizzbaseRequest.");
   }
 
-  /// For override 
-  factory DizzbaseRequest.fromJson(Map<String, dynamic> json)
-  {
-    throw Exception("Abstract base class fromJson called in DizzbaseRequest.");
-  }
-  Map<String, dynamic> toJson() 
-  {
-    throw Exception("Abstract base class toJson called in DizzbaseRequest.");
-  }
+  factory DizzbaseRequest.fromJson(Map<String, dynamic> json) => _$DizzbaseRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$DizzbaseRequestToJson(this);
 
 }
 
@@ -48,12 +43,13 @@ class DizzbaseRequest<DizzbaseResultType>
 @JsonSerializable(explicitToJson: true)
 class DizzbaseToServerPacket
 {
-  DizzbaseToServerPacket (this.jwt, this.uuid, this.transactionuuid, this.dizzbaseRequest, this.dizzbaseRequestType);
+  DizzbaseToServerPacket (this.jwt, this.uuid, this.transactionuuid, this.dizzbaseRequest, this.dizzbaseRequestType, {this.nickName = ""});
   final String jwt;
   final String uuid;
   final String transactionuuid;
   final DizzbaseRequest dizzbaseRequest;
   final String dizzbaseRequestType;
+  final String nickName;
 
   factory DizzbaseToServerPacket.fromJson(Map<String, dynamic> json) => _$DizzbaseToServerPacketFromJson(json);
   Map<String, dynamic> toJson() => _$DizzbaseToServerPacketToJson(this);

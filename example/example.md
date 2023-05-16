@@ -9,80 +9,85 @@ The demo app illustrates all examples from below. It also contains SQL scripts t
 ## Initialization
 
 Initialize the dizzbase client in main():
-
+    ```dart
     void main() {
-    runApp(const MyApp());
-    DizzbaseConnection.configureConnection("http://localhost:3000", "my-security-token");
+        runApp(const MyApp());
+        DizzbaseConnection.configureConnection("http://localhost:3000", "my-security-token");
     }
+    ```dart
 
-For each widget the requires streamed updates, create/dispose a DizzbaseConnection:
+## Retrieve data with real-time updates for use with StreamBuilder:
 
+For each widget the requires streamed updates, create/dispose a DizzbaseConnection and create the Stream as follows:
+
+    ```dart
     @override
     void initState() {
-        dizzbaseClient = DizzbaseConnection();
+        myDizzbaseConnection = DizzbaseConnection();
+        _stream_1 = myDizzbaseConnection.streamFromQuery(DizzbaseQuery(table: MainTable("employee", pkey: 3)))
         super.initState();
+
+        // Demo of how a list of orders is automatically updated when a new order is added.
+        _stream_2 = myDizzbaseConnection.streamFromQuery(DizzbaseQuery(
+            table: MainTable("order"), 
+            joinedTables: [JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey:  'sales_rep_id' )],
+            filters: [Filter('employee', 'employee_id', 2)])
+            //...
+
+        // Search with a LIKE statement.
+        _stream_3 = myDizzbaseConnection.streamFromQuery(DizzbaseQuery(table: MainTable("employee"), 
+            filters: [Filter('employee', 'employee_email', '%hotmail%', comparison: 'LIKE')])
+            // ...
+
+        // Complex query      
+        _stream_4 = myDizzbaseConnection.streamFromQuery(DizzbaseQuery(
+            table:
+            MainTable('order'),
+            joinedTables:
+            [
+            // Automatic JOIN: This will include all columns, and the JOIN to the MainTable will be added automatically using the constraint information in the database
+            JoinedTable('customer'), 
+            // Join the same table two time, so we need to add aliases. 
+            // Observe that the columns for tables with aliases are named differently in the output table - "seller_employee_name" instead of just "employee_name"
+            JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey: 'sales_rep_id', columns: ['employee_name', 'employee_email'], alias: 'seller'),
+            JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey: 'services_rep_id', columns: ['employee_name'], alias: 'consultant'),
+            ],
+            sortFields: 
+            [
+            // Note the the alias is used for sorting, rather than the table name (as the table is part of two joins)
+            SortField('seller', 'employee_name', ascending: false), 
+            SortField('order', 'order_id', ascending: false), 
+            ],
+            filters: 
+            [
+            Filter ('order', 'order_revenue', 50, comparison: ">="),
+            ]
+        ));
+
     }
 
     @override
     void dispose() {
         // IMPORTANT!
-        dizzbaseClient.dispose();
+        myDizzbaseConnection.dispose();
         super.dispose();
     }
+    ```
 
-## Retrieve data with real-time updates for use with StreamBuilder:
-
-Create a DizzbaseConnection (here: myDizzbaseConnection) object in the initState() override of the widget. Use it as follows to retrieve data that is being updated real-time:
+Use the _stream_x objects as follows:
 
     StreamBuilder<List<Map<String, dynamic>>>(
-    stream: myDizzbaseConnection.streamFromQuery(DizzbaseQuery(table: MainTable("employee", pkey: 3))),
+    stream: _stream_x,
     builder: ((context, snapshot) {
         if (snapshot.hasData)
         {
-        return Text ("Employee \"${snapshot.data![0]['employee_name']}\" uses the email address \"${snapshot.data![0]['employee_email']}\".");
+            return // ... build your widget ...;
+        } else if (snapshot.hasError) {
+            throw Exception("Snapshot has error: ${snapshot.error}");
+        } else {
+            // ... show progress indicator ...
         }
-        return Text ("Waiting for inforation on employee number 3...");
     })),
-
-
-
-    // Demo of how a list of orders is automatically updated when a new order is added.
-    stream: myDizzbaseConnection.streamFromQuery(DizzbaseQuery(
-        table: MainTable("order"), 
-        joinedTables: [JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey:  'sales_rep_id' )],
-        filters: [Filter('employee', 'employee_id', 2)])
-        //...
-
-    // Search with a LIKE statement.
-    stream: myDizzbaseConnection.streamFromQuery(DizzbaseQuery(table: MainTable("employee"), filters: [Filter('employee', 'employee_email', '%hotmail%', comparison: 'LIKE')])
-    // ...
-
-    // Complex query      
-    stream: myDizzbaseConnection.streamFromQuery(DizzbaseQuery(
-        table:
-        MainTable('order'),
-        joinedTables:
-        [
-        // Automatic JOIN: This will include all columns, and the JOIN to the MainTable will be added automatically using the constraint information in the database
-        JoinedTable('customer'), 
-        // Join the same table two time, so we need to add aliases. 
-        // Observe that the columns for tables with aliases are named differently in the output table - "seller_employee_name" instead of just "employee_name"
-        JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey: 'sales_rep_id', columns: ['employee_name', 'employee_email'], alias: 'seller'),
-        JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey: 'services_rep_id', columns: ['employee_name'], alias: 'consultant'),
-        ],
-        sortFields: 
-        [
-        // Note the the alias is used for sorting, rather than the table name (as the table is part of two joins)
-        SortField('seller', 'employee_name', ascending: false), 
-        SortField('order', 'order_id', ascending: false), 
-        ],
-        filters: 
-        [
-        Filter ('order', 'order_revenue', 50, comparison: ">="),
-        ]
-    )
-    //...
-
 
 ## UPDATE/DELETE/INSERT Transactions
 
