@@ -1,3 +1,7 @@
+## 0.0.7
+
+* Full API rework, not backwards compatible
+
 ## 0.0.6
 
 * Updated Examples

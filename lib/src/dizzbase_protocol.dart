@@ -28,6 +28,14 @@ class DizzbaseRequest<DizzbaseResultType>
     transactionuuid = "";
   }
 
+  /// Indicates whether the Request should keep persistent state on the server.
+  /// If "false", the server state will be removed automatically
+  /// If "true", the server state will be removed up calling dispose()
+  bool persistOnServer ()
+  {
+    return false;
+  }
+
   /// For override 
   void complete(DizzbaseFromServerPacket fromServer)
   {

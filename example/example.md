@@ -23,9 +23,13 @@ For each widget the requires streamed updates, create/dispose a DizzbaseConnecti
     
     @override
     void initState() {
-        myDizzbaseConnection = DizzbaseConnection();
-        _stream_1 = myDizzbaseConnection.streamFromQuery(DizzbaseQuery(table: MainTable("employee", pkey: 3)))
         super.initState();
+        
+        // Start a new connection to the backend
+        myDizzbaseConnection = DizzbaseConnection();
+
+        // Retriev a single row via primary key
+        _stream_1 = myDizzbaseConnection.streamFromQuery(DizzbaseQuery(table: MainTable("employee", pkey: 3)))
 
         // Demo of how a list of orders is automatically updated when a new order is added.
         _stream_2 = myDizzbaseConnection.streamFromQuery(DizzbaseQuery(
@@ -45,22 +49,22 @@ For each widget the requires streamed updates, create/dispose a DizzbaseConnecti
             MainTable('order'),
             joinedTables:
             [
-            // Automatic JOIN: This will include all columns, and the JOIN to the MainTable will be added automatically using the constraint information in the database
-            JoinedTable('customer'), 
-            // Join the same table two time, so we need to add aliases. 
-            // Observe that the columns for tables with aliases are named differently in the output table - "seller_employee_name" instead of just "employee_name"
-            JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey: 'sales_rep_id', columns: ['employee_name', 'employee_email'], alias: 'seller'),
-            JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey: 'services_rep_id', columns: ['employee_name'], alias: 'consultant'),
+                // Automatic JOIN: This will include all columns, and the JOIN to the MainTable will be added automatically using the constraint information in the database
+                JoinedTable('customer'), 
+                // Join the same table two time, so we need to add aliases. 
+                // Observe that the columns for tables with aliases are named differently in the output table - "seller_employee_name" instead of just "employee_name"
+                JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey: 'sales_rep_id', columns: ['employee_name', 'employee_email'], alias: 'seller'),
+                JoinedTable('employee', joinToTableOrAlias: 'order', foreignKey: 'services_rep_id', columns: ['employee_name'], alias: 'consultant'),
             ],
             sortFields: 
             [
-            // Note the the alias is used for sorting, rather than the table name (as the table is part of two joins)
-            SortField('seller', 'employee_name', ascending: false), 
-            SortField('order', 'order_id', ascending: false), 
+                // Note the the alias is used for sorting, rather than the table name (as the table is part of two joins)
+                SortField('seller', 'employee_name', ascending: false), 
+                SortField('order', 'order_id', ascending: false), 
             ],
             filters: 
             [
-            Filter ('order', 'order_revenue', 50, comparison: ">="),
+                Filter ('order', 'order_revenue', 50, comparison: ">="),
             ]
         ));
 
@@ -89,9 +93,11 @@ Use the _stream_x objects as follows:
             }
     })),
 
+Do NOT create the streams in build() or builder() of a widget as this leads to multiple streams being created (therefore slow performance) and significant overhead on the server.
+
 ## UPDATE/DELETE/INSERT Transactions
 
-Use the DizzbaseUpdate, DizzbaseInsert, DizzbaseDelete classes with the DizzbaseConnection().updateTransaction, DizzbaseConnection().insertTransaction, DizzbaseConnection().deleteTransaction methods. Either a DizzbaseResultRowCount (UPDATE/DELTE: indicating the number of affected rows) or a DizzbaseResultPkey (INSERT: indicating the primary key of the new row) object is return as a future:
+Use the ```DizzbaseUpdate```, ```DizzbaseInsert```, ```DizzbaseDelete``` classes with the ```DizzbaseConnection().updateTransaction()```, ```DizzbaseConnection().insertTransaction()```, ```DizzbaseConnection().deleteTransaction()``` methods. Either a ```DizzbaseResultRowCount``` (UPDATE/DELTE: indicating the number of affected rows) or a ```DizzbaseResultPkey``` (INSERT: indicating the primary key of the new row) object is return as a future:
 
     // Update, similar for Delete
     DizzbaseConnection().updateTransaction(
@@ -112,4 +118,4 @@ Use the DizzbaseUpdate, DizzbaseInsert, DizzbaseDelete classes with the Dizzbase
 
 ## Directly sending SQL to execute SELECTs, stored procedures or anything else
 
-Use ```DizzbaseConnection.directSQLTransaction(String sqlStatement)``` to send any custom SQL statement and receive the result as a Future<DizzbaseResultRows>. DizzbaseResultRows contains your data and error information (if any).
+Use ```DizzbaseConnection.directSQLTransaction(String sqlStatement)``` to send any custom SQL statement and receive the result as a ```Future<DizzbaseResultRows>```. ```DizzbaseResultRows``` contains your data and error information (if any).

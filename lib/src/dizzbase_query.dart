@@ -117,6 +117,13 @@ class DizzbaseQuery extends DizzbaseRequest<DizzbaseResultRows>
   }
 
   @override
+  bool persistOnServer ()
+  {
+    return true;
+  }
+
+
+  @override
   void complete(DizzbaseFromServerPacket fromServer)
   {
     if ((fromServer.error != "") || (fromServer.data == null))

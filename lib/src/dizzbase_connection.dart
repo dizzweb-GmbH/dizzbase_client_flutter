@@ -47,7 +47,7 @@ class DizzbaseConnection
     _socket.onConnect((val) {
       // Moved the init event directly after the io.io(url) call as the .onConnect event wasn't triggered reliably 
       //_socket.emit ('init', connectionuuid);
-      print('Connection $nickName: Connected to server.');
+      // print('Connection $nickName: Connected to server.');
       if (hasBeenDisconnected)
       {
         print ("Reconnect: Sending reconnect notifications to queries.");
@@ -88,6 +88,7 @@ class DizzbaseConnection
         {
           var fromServer = DizzbaseFromServerPacket.fromJson (data);
           transactions[fromServer.transactionuuid]!.complete(fromServer);
+          if (transactions[fromServer.transactionuuid]!.persistOnServer() == false) _closeConnectionOnServer();
         }
         } catch (e) {print ("_socket.on ('dbrequest_response') - error: $e");}
       }); 
@@ -107,13 +108,18 @@ class DizzbaseConnection
     }
   }
 
+  void _closeConnectionOnServer()
+  {
+    _socket.emit('close_connection', connectionuuid);
+  }
+
   /// Closes the stream (if any) and unregisteres the connection from the dizzbase server
   void dispose ()
   {
-    _socket.emit('close', connectionuuid);
     transactions.forEach((key, t) {
       t.dispose();
     });
+    _closeConnectionOnServer();
     transactions = {};
   }
 
@@ -126,7 +132,7 @@ class DizzbaseConnection
   void _requestExecutionCallback (String tUuid, DizzbaseRequest t, bool reconnect)
   {
     if (!reconnect) transactions[tUuid] = t;	
-    print ("SENDING TO SERVER: $nickName / ${t.nickName}");
+    // print ("SENDING TO SERVER: $nickName / ${t.nickName}");
     _sendToServer(t, transactionuuid: tUuid);
   }
 
