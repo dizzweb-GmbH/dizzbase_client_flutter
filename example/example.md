@@ -132,4 +132,4 @@ Use the ```DizzbaseUpdate```, ```DizzbaseInsert```, ```DizzbaseDelete``` classes
 
 ## Directly sending SQL to execute SELECTs, stored procedures or anything else
 
-Use ```DizzbaseConnection.directSQLTransaction(String sqlStatement)``` to send any custom SQL statement and receive the result as a ```Future<DizzbaseResultRows>```. ```DizzbaseResultRows``` contains your data and error information (if any).
+Use ```DizzbaseConnection.directSQLTransaction(String sqlStatement)``` to send any custom SQL statement and receive the result as a ```Future<DizzbaseResultRows>```. ```DizzbaseResultRows``` contains your data and error information (if any). Note that this feature carries the risk of SQL injections attacks and has to be enabled on the backend dizzbase server via .env file.
