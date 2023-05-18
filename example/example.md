@@ -97,6 +97,18 @@ Use the _stream_x objects as follows:
 
 Do NOT create the streams in build() or builder() of a widget as this leads to multiple streams being created (therefore slow performance) and significant overhead on the server.
 
+Automatic join: If two tables are joined via a foreign key constraint in the database, the ```JoinedTable``` can be added to the query without naming the keys - it is automatically looked up in the db schema.
+
+## Real-time updates for stream-based queries
+
+Stream-based queries will be updated automatically if row in the query are updated or delete. 
+
+For joined tables, the query will also be updated if a new record is inserted for the primary key of the joined table. Consider for example:
+```
+SELECT * FROM orders JOIN customers ON orders.customer_id = customers.id;
+```
+In this case, the query will be updated if a new "orders" row is created for the customer record.
+
 ## UPDATE/DELETE/INSERT Transactions
 
 Use the ```DizzbaseUpdate```, ```DizzbaseInsert```, ```DizzbaseDelete``` classes with the ```DizzbaseConnection().updateTransaction()```, ```DizzbaseConnection().insertTransaction()```, ```DizzbaseConnection().deleteTransaction()``` methods. Either a ```DizzbaseResultRowCount``` (UPDATE/DELTE: indicating the number of affected rows) or a ```DizzbaseResultPkey``` (INSERT: indicating the primary key of the new row) object is return as a future:

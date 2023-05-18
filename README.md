@@ -39,7 +39,3 @@ Please refer to the demo widgets for details on how to use the client.
 ## Additional information
 
 A JavaScript/React client might be available in the future.
-
-## TO DO 
-
-Backend security (access token) is not yet implemented.

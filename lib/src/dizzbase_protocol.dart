@@ -79,3 +79,20 @@ class DizzbaseFromServerPacket
   factory DizzbaseFromServerPacket.fromJson(Map<String, dynamic> json) => _$DizzbaseFromServerPacketFromJson(json);
   Map<String, dynamic> toJson() => _$DizzbaseFromServerPacketToJson(this);
 }
+
+/// API internal-use only: Required to properly transfer DateTime (and may other values) as Json
+class DizzbaseJsonDynamicConverter implements JsonConverter<dynamic, String> {
+  const DizzbaseJsonDynamicConverter();
+
+  @override
+  dynamic fromJson(String json) => json; // this is never used as we do not recieve transactions from the server.
+
+  @override
+  String toJson(dynamic object) {
+    if (object is DateTime) {
+      return object.toIso8601String();
+    } else {
+      return object.toString();
+    }
+  }
+}

@@ -25,7 +25,10 @@ DizzbaseUpdate _$DizzbaseUpdateFromJson(Map<String, dynamic> json) =>
       table: json['table'] as String,
       fields:
           (json['fields'] as List<dynamic>).map((e) => e as String).toList(),
-      values: json['values'],
+      values: (json['values'] as List<dynamic>)
+          .map((e) => _$JsonConverterFromJson<String, dynamic>(
+              e, const DizzbaseJsonDynamicConverter().fromJson))
+          .toList(),
       filters: (json['filters'] as List<dynamic>?)
               ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -39,16 +42,27 @@ Map<String, dynamic> _$DizzbaseUpdateToJson(DizzbaseUpdate instance) =>
       'nickName': instance.nickName,
       'table': instance.table,
       'fields': instance.fields,
-      'values': instance.values,
+      'values': instance.values
+          .map(const DizzbaseJsonDynamicConverter().toJson)
+          .toList(),
       'filters': instance.filters.map((e) => e.toJson()).toList(),
     };
+
+Value? _$JsonConverterFromJson<Json, Value>(
+  Object? json,
+  Value? Function(Json json) fromJson,
+) =>
+    json == null ? null : fromJson(json as Json);
 
 DizzbaseInsert _$DizzbaseInsertFromJson(Map<String, dynamic> json) =>
     DizzbaseInsert(
       table: json['table'] as String,
       fields:
           (json['fields'] as List<dynamic>).map((e) => e as String).toList(),
-      values: json['values'],
+      values: (json['values'] as List<dynamic>)
+          .map((e) => _$JsonConverterFromJson<String, dynamic>(
+              e, const DizzbaseJsonDynamicConverter().fromJson))
+          .toList(),
       nickName: json['nickName'] as String? ?? "",
     )..transactionuuid = json['transactionuuid'] as String;
 
@@ -58,7 +72,9 @@ Map<String, dynamic> _$DizzbaseInsertToJson(DizzbaseInsert instance) =>
       'nickName': instance.nickName,
       'table': instance.table,
       'fields': instance.fields,
-      'values': instance.values,
+      'values': instance.values
+          .map(const DizzbaseJsonDynamicConverter().toJson)
+          .toList(),
     };
 
 DizzbaseDelete _$DizzbaseDeleteFromJson(Map<String, dynamic> json) =>

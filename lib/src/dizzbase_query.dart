@@ -72,6 +72,7 @@ class SortField
 
 /// Creates the WHERE part of the SQL statement
 @JsonSerializable()
+@DizzbaseJsonDynamicConverter()
 class Filter
 {
   /// The table parameter has to be the table alias if specified in Table() or JoinedTable() constructor.

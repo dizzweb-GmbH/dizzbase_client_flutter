@@ -1,3 +1,7 @@
+## 0.0.11
+
+* SQL injection protection and parameter binding
+
 ## 0.0.10
 
 * First working version of login/authentication

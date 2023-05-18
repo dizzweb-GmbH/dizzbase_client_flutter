@@ -67,16 +67,23 @@ Map<String, dynamic> _$SortFieldToJson(SortField instance) => <String, dynamic>{
 Filter _$FilterFromJson(Map<String, dynamic> json) => Filter(
       json['table'] as String,
       json['column'] as String,
-      json['value'],
+      _$JsonConverterFromJson<String, dynamic>(
+          json['value'], const DizzbaseJsonDynamicConverter().fromJson),
       comparison: json['comparison'] as String? ?? "=",
     );
 
 Map<String, dynamic> _$FilterToJson(Filter instance) => <String, dynamic>{
       'table': instance.table,
       'column': instance.column,
-      'value': instance.value,
+      'value': const DizzbaseJsonDynamicConverter().toJson(instance.value),
       'comparison': instance.comparison,
     };
+
+Value? _$JsonConverterFromJson<Json, Value>(
+  Object? json,
+  Value? Function(Json json) fromJson,
+) =>
+    json == null ? null : fromJson(json as Json);
 
 DizzbaseQuery _$DizzbaseQueryFromJson(Map<String, dynamic> json) =>
     DizzbaseQuery(
