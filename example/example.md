@@ -8,13 +8,15 @@ The demo app illustrates all examples from below. It also contains SQL scripts t
 
 ## Initialization
 
-Initialize the dizzbase client in main():
-    
-    void main() {
-        runApp(const MyApp());
-        DizzbaseConnection.configureConnection("http://localhost:3000", "my-security-token");
-    }
-    
+Initialize the dizzbase client in main(). For testing you can call login with the admin demo user that is automatically created (set main() to async to await the login) - otherwise you would show a login screen. Note that logging in and providing an access token is only necessary if JWT is enabled in the backend -  see README.md of the dizzbase NPM backend package on how to en/disable JWT and how to create an API access token.
+
+```
+void main() async {
+    DizzbaseConnection.configureConnection("http://localhost:3000", "...api access token...");
+    await DizzbaseAuthentication.login(userName: "admin", password: "admin");
+    runApp(const MyApp());
+}    
+```
 
 ## Retrieve data with real-time updates for use with StreamBuilder:
 

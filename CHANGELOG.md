@@ -1,3 +1,7 @@
+## 0.0.14
+
+* Authentication/login rework
+
 ## 0.0.11
 
 * SQL injection protection and parameter binding

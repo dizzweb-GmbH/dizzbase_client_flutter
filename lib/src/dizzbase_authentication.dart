@@ -1,6 +1,5 @@
 import 'dart:async';
-import 'dizzbase_connection.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:dizzbase_client/src/dizzbase_socket.dart';
 
 /// Represents a login
 class DizzbaseLoginData
@@ -43,52 +42,41 @@ class DizzbaseAuthentication
   /// You can await the login result: "OK"
   static Future<DizzbaseLoginResult> login ({String userName="", String email="", String password = "", String authType = 'local'}) async
   {
-    if ((userName != "") && (email != "")) {throw Exception("DizzbaseAuthentication.login: Pass either a userName *or* email, not both.");}
+    if ((userName != "") && (email != "")) {throw Exception("DizzbaseAuthentication.login: Pass either a userName *or* email to identify the user, not both.");}
     Map<String, dynamic> loginData = {};
     loginData["authRequestType"] = 'login';
     loginData["userName"] = userName;
     loginData["email"] = email;
     loginData["password"] = password;
     loginData["authType"] = 'local';
-    Completer<DizzbaseLoginResult> completer = Completer();
-    _sendAuthRequest(loginData, _setCurrentUser, (data, setCurrentUserCallback) {
+
+    DizzbaseLoginResult? result;
+    try 
+    {
+      var data = await DizzbaseSocket.sendAuthRequest (loginData, DizzbaseSocket.apiAccessToken);
       if (data["error"]=="") 
       {
-        setCurrentUserCallback (DizzbaseLoginData(id: data["userID"], userName: data["userName"], email: data["email"], 
+        _setCurrentUser (DizzbaseLoginData(id: data["userID"], userName: data["userName"], email: data["email"], 
           role: data["role"], verified: data["verified"], jwt: data["jwt"], uuid: data["uuid"]));
-        completer.complete(DizzbaseLoginResult(true, ""));
+        result = DizzbaseLoginResult(true, "");
       } else {
-        completer.complete(DizzbaseLoginResult(false, data["error"]));
+        result = DizzbaseLoginResult(false, data["error"]);
       }
-      socket.off('dizzbase_auth_response');
-    });
+    } catch (err) {result = DizzbaseLoginResult(false, err.toString());}
 
-    return completer.future;
+    return result;
   }
 
-  static logout ()
+  static void logout ()
   {
     if (_currentUser == null) return;
-    _sendAuthRequest({"authRequestType": "logout", "uuid": _currentUser!.uuid}, null, null);
+    Map<String, dynamic> logoutData = {};
+    logoutData["authRequestType"] = 'logout';
+    logoutData["userName"] = _currentUser!.userName;
+    logoutData["uuid"] = _currentUser!.uuid;
+
+    DizzbaseSocket.sendAuthRequest (logoutData, DizzbaseSocket.apiAccessToken);
     _setCurrentUser(null);
-  }
-
-  static io.Socket socket = io.io(gUrl, io.OptionBuilder().setTransports(['websocket']).enableAutoConnect().build());
-
-  static void _sendAuthRequest (Map<String,dynamic> loginData,
-    void Function (DizzbaseLoginData newUser)? setCurrentUserCallback,
-    void Function (Map<String, dynamic> data, void Function (DizzbaseLoginData newUser) setCurrentUserCallback)? processResponse)
-  {
-    socket.onConnect((val) {});
-    socket.onerror((data) { throw Exception ("LOGIN Socket onerror: ${data.toString()}"); });
-    socket.on("error", (data) {throw Exception ("LOGIN Socket on 'error': ${data.toString()}"); });
-    socket.on('dizzbase_auth_response', (data) {
-      if (processResponse != null) processResponse (data, setCurrentUserCallback!);
-    });
-    socket.onDisconnect((_) {});
-    socket.onError((data) {});
-
-    socket.emit('dizzbase_auth_request', loginData);
   }
 
   static Future<int> getUserID (String emailOrName) async
