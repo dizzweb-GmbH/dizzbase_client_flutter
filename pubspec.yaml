@@ -1,6 +1,6 @@
 name: dizzbase_client
 description: Flutter client for the dizzbase node.js realtime database backend.
-version: 0.0.14
+version: 0.0.15
 homepage: https://dizzweb.com
 repository: https://github.com/dizzweb-GmbH/dizzbase_client_flutter
 

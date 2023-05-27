@@ -101,6 +101,8 @@ Do NOT create the streams in build() or builder() of a widget as this leads to m
 
 Automatic join: If two tables are joined via a foreign key constraint in the database, the ```JoinedTable``` can be added to the query without naming the keys - it is automatically looked up in the db schema.
 
+Note that JoinedTables has an option for Left/Right Outer Joins.
+
 ## Real-time updates for stream-based queries
 
 Stream-based queries will be updated automatically if row in the query are updated or delete. 

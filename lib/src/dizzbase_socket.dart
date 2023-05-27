@@ -41,6 +41,7 @@ class DizzbaseSocket
 
   static void sendDBRequestToServer (DizzbaseToServerPacket packet)
   {
+    //print ("XXX sock out: ${_socketManager.socketuuid} ");
     String token = apiAccessToken;
     if (DizzbaseAuthentication.currentUser != null) token = DizzbaseAuthentication.currentUser!.jwt;
     _socketManager.socket.emit('dbrequest',  {"socketuuid": _socketManager.socketuuid, "token": token, "data": packet});    
@@ -53,8 +54,28 @@ class DizzbaseSocket
       if (data["jwtError"] != null) throw Exception(data["jwtError"]);
 
       var fromServer = DizzbaseFromServerPacket.fromJson (data);
-      _connections[data['uuid']]!.processDBRequestResponse(fromServer);
-    } catch (e) {print ("_socket.on ('dbrequest_response') - error: $e");}
+      var connection = _connections[data['uuid']];
+      if (connection != null)
+      {      
+        connection.processDBRequestResponse(fromServer);
+      } else {
+
+        if (data['uuid'] == null) print ("Received null value in connection uuid");
+        try
+        {
+          if (connection == null)
+          {
+            print ("WARNING: Received an invalid connection uuid ${data['uuid']} from server. This may happen after a flutter hot reload. Sending disconnect request to server.");
+            DizzbaseSocket.closeConnection(data['uuid']);
+          }
+        } catch (e)
+        {
+          print ("_socket.on ('dbrequest_response') - error closing unindentified connection: $e");
+        }
+      }
+    } catch (e) {
+      print ("_socket.on ('dbrequest_response') - error: $e");
+    }
   }
 
   static Future<dynamic> sendAuthRequest (Map<String,dynamic> authRequestData, String token) async
@@ -122,18 +143,26 @@ class DizzbaseSocket
   }
 }
 
+String gSocketuuid = "";
+
+
 class _SocketManager
 {
   static final _SocketManager _socketManager = _SocketManager._internal();
-  factory _SocketManager() {return _socketManager;}
   late io.Socket socket;
-  String socketuuid =  "";
+
+  String get socketuuid {return gSocketuuid;}
+  set socketuuid (String newUuid) {gSocketuuid = newUuid;}
+
+  factory _SocketManager() {
+    return _socketManager;
+  }
 
   void sendInitToServer()
   {
-    socketuuid = const Uuid().v4();
-    print ("Initializing socket $socketuuid");
-    socket.emit("dizzbase_socket_init", {"socketuuid": socketuuid, "data": {}});
+      socketuuid = const Uuid().v4();
+      print ("Initializing socket $socketuuid");
+      socket.emit("dizzbase_socket_init", {"socketuuid": socketuuid, "data": {}});
   }
 
   void _handleDisconnectOrError (String msg)
@@ -147,15 +176,17 @@ class _SocketManager
     print ("dizzbase _SocketManager: Creating socket connection.");
     socket= io.io(DizzbaseSocket._url, io.OptionBuilder()
       .setTransports(['websocket']) // Authorization header does not work with this option??
-      .enableAutoConnect()
+      .enableAutoConnect().enableForceNew().disableMultiplex().enableForceNewConnection()
       //.setExtraHeaders({'Authorization': "Bearer ${(gUserToken=="")?gApiAccessToken:gUserToken}"})
       //.setQuery({'token': gApiAccessToken})
       .build()
     );
+    
     sendInitToServer();
-
     socket.onConnect((data) {
-      if (socketuuid == "") sendInitToServer(); // reconnect
+      if (socketuuid == "") {
+        sendInitToServer(); // reconnect
+      }
       DizzbaseSocket._handleConnect(data);
     });
 
@@ -170,7 +201,10 @@ class _SocketManager
     });
 
     // Send from server on query transactions (eg SELECT)
-    socket.on('dbrequest_response', (data) => DizzbaseSocket._handleDBRequestResponse(data)); 
+    socket.on('dbrequest_response', (data) {
+      //print ("XXX sock in: $socketuuid");
+      DizzbaseSocket._handleDBRequestResponse(data);
+    }); 
 
     socket.onDisconnect((_) => _handleDisconnectOrError("socket.io disconnect."));
 

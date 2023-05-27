@@ -67,12 +67,14 @@ class DizzbaseConnection
 
   void _requestExecutionCallback (String tUuid, DizzbaseRequest t, bool reconnect)
   {
-    if (!reconnect) _transactions[tUuid] = t;	
+    if (!reconnect) _transactions[tUuid] = t;
+    //print ("XXX SENDING: Conn: $nickName ($connectionuuid) Req: ${t.nickName} (${t.transactionuuid})");
     _sendToServer(t, transactionuuid: tUuid);
   }
 
   void processDBRequestResponse (DizzbaseFromServerPacket fromServer)
   {
+    //print ("XXX RECEIVING: Conn: $nickName ($connectionuuid) Req: ${fromServer.transactionuuid}");
     _transactions[fromServer.transactionuuid]!.complete(fromServer);
     if (_transactions[fromServer.transactionuuid]!.persistOnServer() == false) _transactions.remove(fromServer.transactionuuid);
   }
